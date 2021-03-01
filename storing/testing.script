@@ -1,0 +1,8 @@
+def myProg():
+    check = True
+    a = 0
+    if (check):
+        a = 2
+    end
+    textmsg(a)
+end
