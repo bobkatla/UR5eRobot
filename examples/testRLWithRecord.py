@@ -23,6 +23,9 @@ REWARD_ARRIVE = 1
 REWARD_NOT = 0
 PELNATY = -1
 
+JOINTS_TESTED = [1,0,0,0,1,0]
+NUMBER_OF_JOINTS = 2
+
 GOAL = [-0.1, 0.4, 0.2]
 ERROR_RATE = 0.1
 
@@ -32,10 +35,11 @@ start_q_table = None
 
 # create the table with the size based on x, y, z and the number of action
 if start_q_table is None:
-    q_table = np.random.uniform(low=-2, high=0, size=(DISCRETE_SIZE + [NUMBER_ACTION]))
+    q_table = np.random.uniform(low=-2, high=0, size=(DISCRETE_SIZE + NUMBER_OF_JOINTS*[NUMBER_ACTION]))
 else: 
     print("something is waiting for you")
 
+# print(np.size(q_table))
 # Exploration settings
 epsilon = 1  # not a constant, going to be decayed
 epsilon_decay_value = 1/NUMBER_ACTION
