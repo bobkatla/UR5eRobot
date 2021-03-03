@@ -15,7 +15,7 @@ DISCOUNT = 0.95
 MAX = [1,1,1] #max is 1m for all x, y, z
 MIN = [-1,-1,-1]  #min is 1m for all x, y, z
 
-TIMES_TRAIN = 100
+TIMES_TRAIN = 5
 
 NUMBER_ACTION = 6
 
@@ -38,9 +38,7 @@ else:
 
 # Exploration settings
 epsilon = 1  # not a constant, going to be decayed
-START_EPSILON_DECAYING = 1
-END_EPSILON_DECAYING = TIMES_TRAIN//2 #this is to get the integer value after divition
-epsilon_decay_value = epsilon/(END_EPSILON_DECAYING - START_EPSILON_DECAYING)
+epsilon_decay_value = 1/NUMBER_ACTION
 
 # setup functions
 def takeAction(action, joint_index, s, h):
@@ -130,14 +128,14 @@ for run_no in range(TIMES_TRAIN):
     goal_discrete = getStateDiscrete(GOAL)
     done = False
 
-    print("ok before while")
-
     while not done:
         if np.random.random() > epsilon:
             # get action from the Q-table
+            print("following the table")
             action = np.argmax(q_table[discrete_state])
         else: 
             # Get random action
+            print("doing random")
             action = np.random.randint(0, NUMBER_ACTION)
         
         #testing now with 1 joint
@@ -167,8 +165,7 @@ for run_no in range(TIMES_TRAIN):
             done = True
 
         # Decaying is being done every episode if episode number is within decaying range
-    if END_EPSILON_DECAYING >= run_no >= START_EPSILON_DECAYING:
-        epsilon -= epsilon_decay_value
+    epsilon -= epsilon_decay_value
 
     print("the running is ok for the run no:", run_no)
     print("epsilon is:", epsilon)
