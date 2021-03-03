@@ -8,38 +8,69 @@ import subprocess
 
 #constants
 PI = math.pi
+
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
+
 MAX = [1,1,1] #max is 1m for all x, y, z
 MIN = [-1,-1,-1]  #min is 1m for all x, y, z
-EPISODES = 25000
+
+TIMES_TRAIN = 100
+
 NUMBER_ACTION = 6
-REWARD_ARR = 1
+
+REWARD_ARRIVE = 1
+REWARD_NOT = 0
 PELNATY = -1
 
-DISCRETE_OS_SIZE = [20,20,20]
-a = 2
-discrete_os_win_size = 2/20
+GOAL = [-0.1, 0.4, 0.2]
+ERROR_RATE = 0.1
 
-q_table = np.random.uniform(low=-2, high=0, size=(DISCRETE_OS_SIZE + [NUMBER_ACTION]))
+DISCRETE_SIZE = [20,20,20] #how to discretize based on the the x, y, z
+
+start_q_table = None
+
+# create the table with the size based on x, y, z and the number of action
+if start_q_table is None:
+    q_table = np.random.uniform(low=-2, high=0, size=(DISCRETE_SIZE + [NUMBER_ACTION]))
+else: 
+    print("something is waiting for you")
 
 # Exploration settings
 epsilon = 1  # not a constant, going to be decayed
 START_EPSILON_DECAYING = 1
-END_EPSILON_DECAYING = EPISODES//2
+END_EPSILON_DECAYING = TIMES_TRAIN//2 #this is to get the integer value after divition
 epsilon_decay_value = epsilon/(END_EPSILON_DECAYING - START_EPSILON_DECAYING)
 
 # setup functions
-def takeAction(rad_pos, joint_index, s, h):
+def takeAction(action, joint_index, s, h):
     joints = getCurrentJoints(h).values.tolist()
+    rad_pos = convertPosToRadPos(action)
     joints[joint_index] = rad_pos
     moving = "movej({0}, a=2.0, v=0.8)\n".format(joints)
     s.send(bytes(moving,'utf-8'))
-    time.sleep(1)
+    time.sleep(5)
 
-def getTablePos(h):
+def getDiscretePosX(x, i):
+    # getting the size for each chunk after discretizing
+    size_x = (MAX[i] - MIN[i])/DISCRETE_SIZE[i] 
+    pos_x = x//size_x
+    if pos_x < 0: 
+        pos_x = DISCRETE_SIZE[i]//2 + pos_x
+    return pos_x
 
-    print("will fill up")
+# this will return the position in the table
+
+def getStateDiscrete(xyz):
+    x = xyz[0]
+    y = xyz[1]
+    z = xyz[2]
+
+    pos_x = int(getDiscretePosX(x, 0))
+    pos_y = int(getDiscretePosX(y, 1))
+    pos_z = int(getDiscretePosX(z, 2))
+
+    return pos_x, pos_y, pos_z    
 
 def getCurrentXYZ(h):
     # getting the x, y, z position of the robot
@@ -54,6 +85,12 @@ def getCurrentXYZ(h):
 
     return result
 
+def convertPosToRadPos(pos):
+    a = NUMBER_ACTION // 2
+    size = 2*PI/NUMBER_ACTION
+    pos = pos - a
+    return pos*size
+
 def getCurrentJoints(h):
     # getting the current position of each joint of the robot
     subprocess.check_output(["python", "record.py", "--host", str(h), "--samples", "1", "--frequency", "5", "--config", "curQ_record_config.xml"])
@@ -65,6 +102,19 @@ def getCurrentJoints(h):
 
     return actual_joints
 
+def distanceInXYZ(firstXYZ, secondXYZ):
+    result = 0
+    for i in range(3):
+        a = firstXYZ[i] - secondXYZ[i]
+        b = pow(abs(a), 2)
+        result = result + b
+    result = math.sqrt(result)
+    return result
+
+# def rewardFunc(current_XYZ):
+#     distance = distanceInXYZ(current_XYZ, GOAL)*-1
+#     return distance
+
 #set up the connection
 
 # HOST = "10.10.10.7"
@@ -75,85 +125,53 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 print("connection done\n")
 
-# #moving
-# Q0 = [0,PI/-2,0,PI/-2,0,0]
-# Q1 = [-1.95, -1.66, 1.71, -1.62, -1.56, 1.19]
-# Q3 = [1.3, -0.16, 0.54, -1.94, -1.47, 0.16]
-
-# moveQ0 = "movej({0}, a=2.0, v=0.8)\n".format(Q0)
-# moveQ1 = "movej({0}, a=2.0, v=0.8)\n".format(Q1)
-# moveQ3 = "movej({0}, a=2.0, v=0.8)\n".format(Q3)
-
-# s.send(bytes(moveQ0,'utf-8'))
-# time.sleep(1)
-
-# print(len(q_table))
-
-test = getCurrentJoints(HOST).values.tolist()
-print(test[0])
-
-s.close()
-'''
-SHOW_EVERY = 3000
-
-
-def get_discrete_state(state):
-    discrete_state = (state - env.observation_space.low)/discrete_os_win_size
-    return tuple(discrete_state.astype(np.int))  # we use this tuple to look up the 3 Q values for the available actions in the q-table
-
-
-for episode in range(EPISODES):
-    discrete_state = get_discrete_state(env.reset())
+for run_no in range(TIMES_TRAIN):
+    discrete_state = getStateDiscrete(getCurrentXYZ(HOST))
+    goal_discrete = getStateDiscrete(GOAL)
     done = False
 
-    if episode % SHOW_EVERY == 0:
-        render = True
-        print(episode)
-    else:
-        render = False
+    print("ok before while")
 
     while not done:
-
         if np.random.random() > epsilon:
-            # Get action from Q table
+            # get action from the Q-table
             action = np.argmax(q_table[discrete_state])
-        else:
+        else: 
             # Get random action
-            action = np.random.randint(0, env.action_space.n)
+            action = np.random.randint(0, NUMBER_ACTION)
+        
+        #testing now with 1 joint
+        takeAction(action, 0, s, HOST)
 
+        new_XYZ = getCurrentXYZ(HOST)
 
-        new_state, reward, done, _ = env.step(action)
+        new_state_discrete = getStateDiscrete(new_XYZ)
 
-        new_discrete_state = get_discrete_state(new_state)
+        distance_goal = distanceInXYZ(new_XYZ, GOAL)
 
-        if episode % SHOW_EVERY == 0:
-            print("sup")
-        #new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+        reward = distance_goal * -1
 
-        # If simulation did not end yet after last step - update Q table
-        if not done:
+        # Maximum possible Q value in next step (for new state)
+        max_future_q = np.max(q_table[new_state_discrete])
 
-            # Maximum possible Q value in next step (for new state)
-            max_future_q = np.max(q_table[new_discrete_state])
+        # Current Q value (for current state and performed action)
+        current_q = q_table[discrete_state + (action,)]
 
-            # Current Q value (for current state and performed action)
-            current_q = q_table[discrete_state + (action,)]
+        # And here's our equation for a new Q value for current state and action
+        new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
 
-            # And here's our equation for a new Q value for current state and action
-            new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+        # Update Q table with new Q value
+        q_table[discrete_state + (action,)] = new_q
 
-            # Update Q table with new Q value
-            q_table[discrete_state + (action,)] = new_q
+        if distance_goal < ERROR_RATE:
+            done = True
 
-
-        # Simulation ended (for any reson) - if goal position is achived - update Q value with reward directly
-        elif new_state[0] >= env.goal_position:
-            #q_table[discrete_state + (action,)] = reward
-            q_table[discrete_state + (action,)] = 0
-
-        discrete_state = new_discrete_state
-
-    # Decaying is being done every episode if episode number is within decaying range
-    if END_EPSILON_DECAYING >= episode >= START_EPSILON_DECAYING:
+        # Decaying is being done every episode if episode number is within decaying range
+    if END_EPSILON_DECAYING >= run_no >= START_EPSILON_DECAYING:
         epsilon -= epsilon_decay_value
-'''
+
+    print("the running is ok for the run no:", run_no)
+    print("epsilon is:", epsilon)
+
+np.save(f"./qtableUR5e.npy", q_table)
+s.close()
