@@ -51,10 +51,11 @@ epsilon = 1  # not a constant, going to be decayed
 epsilon_decay_value = 1/EPISODES
 
 # setup functions
-def takeAction(action, joint_index, s, h):
+def takeAction(action, s, h):
     joints = getCurrentJoints(h).values.tolist()
-    rad_pos = convertPosToRadPos(action)
-    joints[joint_index] = rad_pos
+    for i in range(NUMBER_OF_JOINTS):
+        rad_pos = convertPosToRadPos(action[i])
+        joints[THE_TESTED_JOINTS[i]] = rad_pos
     moving = "movej({0}, a=2.0, v=0.8)\n".format(joints)
     s.send(bytes(moving,'utf-8'))
     time.sleep(5)
@@ -153,8 +154,7 @@ for run_no in range(EPISODES):
                 action = action + (a, )
         
         #taking action
-        for i in range(NUMBER_OF_JOINTS):
-            takeAction(action[i], THE_TESTED_JOINTS[i], s, HOST)
+        takeAction(action, s, HOST)
 
         new_XYZ = getCurrentXYZ(HOST)
 
