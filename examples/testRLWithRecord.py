@@ -15,7 +15,7 @@ DISCOUNT = 0.95
 MAX = [1,1,1] #max is 1m for all x, y, z
 MIN = [-1,-1,-1]  #min is 1m for all x, y, z
 
-TIMES_TRAIN = 5
+EPISODES = 5
 
 NUMBER_ACTION = 6
 
@@ -23,10 +23,10 @@ NUMBER_ACTION = 6
 # REWARD_NOT = 0
 # PELNATY = -1
 
-# JOINTS_TESTED = [1,0,0,0,1,0]
-NUMBER_OF_JOINTS = 1
+THE_TESTED_JOINTS = [0, 4]
+NUMBER_OF_JOINTS = len(THE_TESTED_JOINTS)
 
-GOAL = [-0.2, 0.6, 0.8]
+GOAL = [-0.4, 0.1, 0.2] #the xyz goal of the robot
 ERROR_RATE = 0.1
 
 DISCRETE_SIZE = [20,20,20] #how to discretize based on the the x, y, z
@@ -39,10 +39,16 @@ if start_q_table is None:
 else: 
     q_table = np.load(f"./qtableUR5e.npy")
 
-# print(np.size(q_table))
+# a = (1, 2, 3)
+# a = a + (2, )
+# print(a)
+# for x in a:
+#     print(x+1)
+# print(np.size(q_table[a]))
+
 # Exploration settings
 epsilon = 1  # not a constant, going to be decayed
-epsilon_decay_value = 1/NUMBER_ACTION
+epsilon_decay_value = 1/EPISODES
 
 # setup functions
 def takeAction(action, joint_index, s, h):
@@ -119,31 +125,36 @@ def distanceInXYZ(firstXYZ, secondXYZ):
 
 #set up the connection
 
-HOST = "10.10.10.7"
-# HOST = "127.0.0.1"
+# HOST = "10.10.10.7"
+HOST = "127.0.0.1"
 
 PORT = 30002 # UR secondary client
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 print("connection done\n")
 
-for run_no in range(TIMES_TRAIN):
+for run_no in range(EPISODES):
     discrete_state = getStateDiscrete(getCurrentXYZ(HOST))
     goal_discrete = getStateDiscrete(GOAL)
     done = False
 
     while not done:
         if np.random.random() > epsilon:
-            # get action from the Q-table
             print("following the table")
-            action = np.argmax(q_table[discrete_state])
+            # get action from the Q-table
+            # action = np.argmax(q_table[discrete_state])
+            action =  np.unravel_index(np.argmax(q_table[discrete_state], axis=None), q_table[discrete_state].shape) #this will return a tuple of the position that has the highest value
         else: 
             # Get random action
             print("doing random")
-            action = np.random.randint(0, NUMBER_ACTION)
+            action = ()
+            for x in range(NUMBER_OF_JOINTS):
+                a = np.random.randint(0, NUMBER_ACTION)
+                action = action + (a, )
         
-        #testing now with 1 joint
-        takeAction(action, 0, s, HOST)
+        #taking action
+        for i in range(NUMBER_OF_JOINTS):
+            takeAction(action[i], THE_TESTED_JOINTS[i], s, HOST)
 
         new_XYZ = getCurrentXYZ(HOST)
 
@@ -167,6 +178,7 @@ for run_no in range(TIMES_TRAIN):
             new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
 
             # Update Q table with new Q value
+            # Small notE: to access the position inside matrix you have to use tuple not array, that's why it is + (action, )
             q_table[discrete_state + (action,)] = new_q
 
 
