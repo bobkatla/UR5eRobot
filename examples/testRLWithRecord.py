@@ -19,14 +19,14 @@ TIMES_TRAIN = 5
 
 NUMBER_ACTION = 6
 
-REWARD_ARRIVE = 1
-REWARD_NOT = 0
-PELNATY = -1
+# REWARD_ARRIVE = 1
+# REWARD_NOT = 0
+# PELNATY = -1
 
-JOINTS_TESTED = [1,0,0,0,1,0]
-NUMBER_OF_JOINTS = 2
+# JOINTS_TESTED = [1,0,0,0,1,0]
+NUMBER_OF_JOINTS = 1
 
-GOAL = [-0.1, 0.4, 0.2]
+GOAL = [-0.2, 0.6, 0.8]
 ERROR_RATE = 0.1
 
 DISCRETE_SIZE = [20,20,20] #how to discretize based on the the x, y, z
@@ -37,7 +37,7 @@ start_q_table = None
 if start_q_table is None:
     q_table = np.random.uniform(low=-2, high=0, size=(DISCRETE_SIZE + NUMBER_OF_JOINTS*[NUMBER_ACTION]))
 else: 
-    print("something is waiting for you")
+    q_table = np.load(f"./qtableUR5e.npy")
 
 # print(np.size(q_table))
 # Exploration settings
@@ -119,8 +119,8 @@ def distanceInXYZ(firstXYZ, secondXYZ):
 
 #set up the connection
 
-# HOST = "10.10.10.7"
-HOST = "127.0.0.1"
+HOST = "10.10.10.7"
+# HOST = "127.0.0.1"
 
 PORT = 30002 # UR secondary client
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -153,20 +153,22 @@ for run_no in range(TIMES_TRAIN):
 
         reward = distance_goal * -1
 
-        # Maximum possible Q value in next step (for new state)
-        max_future_q = np.max(q_table[new_state_discrete])
-
-        # Current Q value (for current state and performed action)
-        current_q = q_table[discrete_state + (action,)]
-
-        # And here's our equation for a new Q value for current state and action
-        new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-
-        # Update Q table with new Q value
-        q_table[discrete_state + (action,)] = new_q
-
         if distance_goal < ERROR_RATE:
+            q_table[discrete_state + (action,)] = 1
             done = True
+        else:
+            # Maximum possible Q value in next step (for new state)
+            max_future_q = np.max(q_table[new_state_discrete])
+
+            # Current Q value (for current state and performed action)
+            current_q = q_table[discrete_state + (action,)]
+
+            # And here's our equation for a new Q value for current state and action
+            new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+
+            # Update Q table with new Q value
+            q_table[discrete_state + (action,)] = new_q
+
 
         # Decaying is being done every episode if episode number is within decaying range
     epsilon -= epsilon_decay_value
