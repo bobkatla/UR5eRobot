@@ -15,7 +15,7 @@ DISCOUNT = 0.95
 MAX = [1,1,1] #max is 1m for all x, y, z
 MIN = [-1,-1,-1]  #min is 1m for all x, y, z
 
-EPISODES = 5
+EPISODES = 1009
 
 NUMBER_ACTION = 6
 
@@ -23,10 +23,10 @@ NUMBER_ACTION = 6
 # REWARD_NOT = 0
 # PELNATY = -1
 
-THE_TESTED_JOINTS = [0, 4]
+THE_TESTED_JOINTS = [0]
 NUMBER_OF_JOINTS = len(THE_TESTED_JOINTS)
 
-GOAL = [-0.4, 0.1, 0.2] #the xyz goal of the robot
+GOAL = [0.47, 0.34, 0.55] #the xyz goal of the robot
 ERROR_RATE = 0.1
 
 DISCRETE_SIZE = [20,20,20] #how to discretize based on the the x, y, z
@@ -47,7 +47,7 @@ else:
 # print(np.size(q_table[a]))
 
 # Exploration settings
-epsilon = 1  # not a constant, going to be decayed
+epsilon = 0.9  # not a constant, going to be decayed
 epsilon_decay_value = 1/EPISODES
 
 # setup functions
@@ -56,9 +56,9 @@ def takeAction(action, s, h):
     for i in range(NUMBER_OF_JOINTS):
         rad_pos = convertPosToRadPos(action[i])
         joints[THE_TESTED_JOINTS[i]] = rad_pos
-    moving = "movej({0}, a=2.0, v=0.8)\n".format(joints)
+    moving = "movej({0}, a=5.0, v=1.8)\n".format(joints)
     s.send(bytes(moving,'utf-8'))
-    time.sleep(5)
+    time.sleep(3)
 
 def getDiscretePosX(x, i):
     # getting the size for each chunk after discretizing
@@ -162,7 +162,7 @@ for run_no in range(EPISODES):
 
         distance_goal = distanceInXYZ(new_XYZ, GOAL)
 
-        reward = distance_goal * -1
+        reward = 1/distance_goal
 
         if distance_goal < ERROR_RATE:
             q_table[discrete_state + (action,)] = 1
