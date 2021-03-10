@@ -15,7 +15,7 @@ DISCOUNT = 0.95
 MAX = [1,1,1] #max is 1m for all x, y, z
 MIN = [-1,-1,-1]  #min is 1m for all x, y, z
 
-EPISODES = 1009
+EPISODES = 10
 
 NUMBER_ACTION = 6
 
@@ -31,7 +31,7 @@ ERROR_RATE = 0.1
 
 DISCRETE_SIZE = [20,20,20] #how to discretize based on the the x, y, z
 
-start_q_table = None
+start_q_table = 1
 
 # create the table with the size based on x, y, z and the number of action
 if start_q_table is None:
@@ -56,7 +56,7 @@ def takeAction(action, s, h):
     for i in range(NUMBER_OF_JOINTS):
         rad_pos = convertPosToRadPos(action[i])
         joints[THE_TESTED_JOINTS[i]] = rad_pos
-    moving = "movej({0}, a=5.0, v=1.8)\n".format(joints)
+    moving = "movej({0}, a=2.0, v=0.8)\n".format(joints)
     s.send(bytes(moving,'utf-8'))
     time.sleep(3)
 
@@ -126,8 +126,8 @@ def distanceInXYZ(firstXYZ, secondXYZ):
 
 #set up the connection
 
-# HOST = "10.10.10.7"
-HOST = "127.0.0.1"
+HOST = "10.10.10.7"
+# HOST = "127.0.0.1"
 
 PORT = 30002 # UR secondary client
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -164,6 +164,7 @@ for run_no in range(EPISODES):
 
         reward = 1/distance_goal
 
+
         if distance_goal < ERROR_RATE:
             q_table[discrete_state + (action,)] = 1
             done = True
@@ -181,8 +182,7 @@ for run_no in range(EPISODES):
             # Small notE: to access the position inside matrix you have to use tuple not array, that's why it is + (action, )
             q_table[discrete_state + (action,)] = new_q
 
-
-        # Decaying is being done every episode if episode number is within decaying range
+            # Decaying is being done every episode if episode number is within decaying range
     epsilon -= epsilon_decay_value
 
     print("the running is ok for the run no:", run_no)
