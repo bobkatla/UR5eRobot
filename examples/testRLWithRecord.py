@@ -24,8 +24,8 @@ NUMBER_ACTION = 6
 THE_TESTED_JOINTS = [0, 4]
 NUMBER_OF_JOINTS = len(THE_TESTED_JOINTS)
 
-GOAL = [0.47, 0.34, 0.55] #the xyz goal of the robot
-ERROR_RATE = 0.1
+GOAL = [-.34, -0.52, 0.61] #the xyz goal of the robot
+ERROR_RATE = 0.2
 
 DISCRETE_SIZE = [20,20,20] #how to discretize based on the the x, y, z
 
@@ -35,9 +35,9 @@ def takeAction(action, s, h):
     for i in range(NUMBER_OF_JOINTS):
         rad_pos = convertPosToRadPos(action[i])
         joints[THE_TESTED_JOINTS[i]] = rad_pos
-    moving = "movej({0}, a=5.0, v=5.8)\n".format(joints)
+    moving = "movej({0}, a=2.0, v=0.8)\n".format(joints)
     s.send(bytes(moving,'utf-8'))
-    time.sleep(3)
+    time.sleep(5)
 
 def getDiscretePosX(x, i):
     # getting the size for each chunk after discretizing
@@ -99,17 +99,18 @@ def distanceInXYZ(firstXYZ, secondXYZ):
     result = math.sqrt(result)
     return result
 
-start_q_table = None
+start_q_table = 1
 
 # create the table with the size based on x, y, z and the number of action
 if start_q_table is None:
     q_table = np.random.uniform(low=-2, high=0, size=(DISCRETE_SIZE + NUMBER_OF_JOINTS*[NUMBER_ACTION]))
 else: 
-    q_table = np.load(f"./qtableUR5e.npy")
+    # q_table = np.load(f"./qtableUR5e.npy")
+    q_table = np.load(f"./qtableTested.npy")
 
 def main():
     # Exploration settings
-    epsilon = 1  # not a constant, going to be decayed
+    epsilon = 0  # not a constant, going to be decayed
     epsilon_decay_value = 1/EPISODES
 
     for run_no in range(EPISODES):
@@ -141,6 +142,7 @@ def main():
 
             if distance_goal < ERROR_RATE:
                 q_table[discrete_state + (action,)] = 100
+                print("reached goal")
                 done = True
             else:
                 # Maximum possible Q value in next step (for new state)
@@ -159,8 +161,8 @@ def main():
         # Decaying is being done every episode if episode number is within decaying range
         epsilon -= epsilon_decay_value
 
-        print("the running is ok for the run no:", run_no)
-        print("epsilon is:", epsilon)
+        print("the running is ok for the episode:", run_no)
+        print("epsilon will now be:", epsilon)
 
     np.save(f"./qtableUR5e.npy", q_table)
     s.close()
@@ -168,8 +170,8 @@ def main():
 
 #set up the connection
 
-# HOST = "10.10.10.7"
-HOST = "127.0.0.1"
+HOST = "10.10.10.7"
+# HOST = "127.0.0.1"
 
 PORT = 30002 # UR secondary client
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -180,7 +182,7 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        print("interrupted")
+        print("\ninterrupted")
         np.save(f"./qtableUR5e.npy", q_table)
         s.close()
         try: 
