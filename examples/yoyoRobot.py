@@ -19,7 +19,6 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 print("connection done\n")
 
-threshold = 0.1
 # joints = [0.7, -0.8, 0.4, -1.9, -1.6, 1.23]
 # moving = "movej({0}, a=2.0, v=0.8)\n".format(joints)
 # s.send(bytes(moving,'utf-8'))
@@ -31,7 +30,7 @@ def getPoses(h):
     return actual_q
 
 def comparePose(pose1, pose2):
-    thres = 0.01
+    thres = 0.08
     for i in range(0,6):
         if pose1[i] < pose2[i] - thres or pose1[i] > pose2[i] + thres:
             return False
@@ -40,6 +39,10 @@ def comparePose(pose1, pose2):
 def moveTo(joints, a, v):
     moving = "movej({0}, a={1}, v={2})\n".format(joints, a, v)
     s.send(bytes(moving,'utf-8'))
+
+# Starting the program yoyo
+
+threshold = 0.01
 
 while(True):
 
@@ -57,11 +60,7 @@ while(True):
         if comparePose(currentPose, jointsDown):
             print("UP")
             moveTo(jointsUp, 2.0, 1.8)
-            # # sleep
-            # time.sleep(0.5)
     else:
         if comparePose(currentPose, jointsUp):
             print("DOWN")
             moveTo(jointsDown, 2.0, 0.8)
-            # # sleep
-            # time.sleep(0.5)
