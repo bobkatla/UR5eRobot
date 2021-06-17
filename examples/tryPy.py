@@ -17,18 +17,29 @@ import socket
 #     aso.run(main())
 #     elapsed = time.perf_counter() - s
 #     print(f"{__file__} excecuted in {elapsed: 0.2f} seconds.")
-h = "10.10.10.7"
-subprocess.check_output(["python", "record.py", "--host", str(h), "--samples", "1", "--frequency", "5", "--config", "curQ_record_config.xml"])
-a = pd.read_csv("./robot_data.csv")
-actual_xyz = a.loc[0,:]
 
-print(actual_xyz)
+# h = "10.10.10.7"
+# subprocess.check_output(["python", "record.py", "--host", str(h), "--samples", "1", "--frequency", "5", "--config", "curQ_record_config.xml"])
+# a = pd.read_csv("./robot_data.csv")
+# actual_xyz = a.loc[0,:]
 
-# HOST = "10.10.10.7"
-# PORT = 30002 # UR secondary client
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.connect((HOST, PORT))
-# print("connection done\n")
+# print(actual_xyz)
+
+HOST = "10.10.10.7"
+PORT = 30002 # UR secondary client
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((HOST, PORT))
+print("connection done\n")
+
+f = open ("storing.script", "rb")   #Robotiq Gripper
+l = f.read(1024)
+while (l):
+    s.send(l)
+    l = f.read(1024)
+
+# subprocess.check_output(["python", "testSocketCommu.py"])
+
+s.close()
 
 # def moveTo(joints, a, v):
 #     moving = "movej({0}, a={1}, v={2})\n".format(joints, a, v)

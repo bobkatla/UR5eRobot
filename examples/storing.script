@@ -1,0 +1,7 @@
+def myProg():
+    a= socket_open("10.109.31.255", 32007)
+    while (a):
+        a= socket_open("10.109.31.255", 32007)
+        sleep(0.5)
+    end
+end

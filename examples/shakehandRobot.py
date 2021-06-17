@@ -106,19 +106,26 @@ subprocess.check_output(["python", "record.py", "--host", str(HOST), "--samples"
 a = pd.read_csv("./robot_data.csv")
 joint3_force = a.loc[0][3]
 
-threshold = 0.8
+threshold = 0.2
 while joint3_force < threshold:
     subprocess.check_output(["python", "record.py", "--host", str(HOST), "--samples", "1", "--frequency", "125", "--config", "testforce.xml"])
     a = pd.read_csv("./robot_data.csv")
     joint3_force = a.loc[0][3]
 
-Q5 = [2.35, -1.12, 1.32, -2.7, -1.19, -0.24]
-Q6 = [2.35, -1.12, 1.32, -3.0, -1.19, -0.24]
-moveTo(Q5, 2.0, 0.8)
-time.sleep(0.6)
-moveTo(Q6, 2.0, 0.8)
-time.sleep(0.6)
-moveTo(Q5, 2.0, 0.8)
-time.sleep(0.6)
-print("Yesss")
+while True:
+    subprocess.check_output(["python", "record.py", "--host", str(HOST), "--samples", "1", "--frequency", "125", "--config", "testforce.xml"])
+    a = pd.read_csv("./robot_data.csv")
+    joint3_force = a.loc[0][3]
+# print("Yesss")
+    if joint3_force > threshold:
+        Q5 = [2.35, -1.12, 1.32, -2.7, -1.19, -0.24]
+        Q6 = [2.35, -1.12, 1.32, -3.0, -1.19, -0.24]
+        moveTo(Q5, 2.0, 0.8)
+        time.sleep(1)
+        moveTo(Q6, 2.0, 0.8)
+        time.sleep(1)
+    if joint3_force < -0.5:
+        break
+
+moveTo(Q4, 2.0, 0.8)
 s.close()
