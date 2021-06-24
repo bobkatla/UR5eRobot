@@ -1,7 +1,32 @@
 def myProg():
-    a= socket_open("10.109.31.255", 32007)
-    while (a):
-        a= socket_open("10.109.31.255", 32007)
-        sleep(0.5)
+    while (True):
+    $ 1 "Robot Program"
+    $ 2 "MoveJ"
+    $ 3 "Waypoint_1"
+    movej([-1.6007002035724085, -1.7271001974688929, -2.2029998938189905, -0.8079999128924769, 1.5951000452041626, -0.03099996248354131], a=1.3962634015954636, v=1.0471975511965976)
+    $ 4 "If digital_out[0]≟ False "
+    global thread_flag_4=0
+    thread Thread_if_4():
+      $ 5 "Waypoint_2"
+      movej([-1.5918919155982847, -2.077602322080553, -1.690556245487243, -0.9697263956928577, 1.5953255450589165, -0.02219193606001557], a=1.3962634015954636, v=1.0471975511965976)
+      thread_flag_4 = 1
     end
+    if (get_standard_digital_out(0) ==   False  ):
+      global thread_handler_4=run Thread_if_4()
+      while (thread_flag_4 == 0):
+        if not(get_standard_digital_out(0) ==   False  ):
+          kill thread_handler_4
+          thread_flag_4 = 2
+        else:
+          sync()
+        end
+      end
+    else:
+      thread_flag_4 = 2
+    end
+    $ 6 "stopj(15)"
+    stopj(15)
+    $ 7 "sync()"
+    sync()
+  end
 end

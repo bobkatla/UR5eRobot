@@ -10,7 +10,7 @@ print ('starting program')
 # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 s = socket.socket()
-s.bind(("127.0.0.1", 32007))
+s.bind((HOST, PORT))
 s.listen()
 print("Here")
 (c, addr) = s.accept()
