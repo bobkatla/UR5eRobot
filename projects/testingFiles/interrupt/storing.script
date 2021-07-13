@@ -11,10 +11,10 @@ def myProg():
       movej([-1.5918919155982847, -2.077602322080553, -1.690556245487243, -0.9697263956928577, 1.5953255450589165, -0.02219193606001557], a=1.3962634015954636, v=1.0471975511965976)
       thread_flag_4 = 1
     end
-    if (get_standard_digital_out(0) ==   False  ):
+    if (get_standard_digital_out(1) ==   False  ):
       global thread_handler_4=run Thread_if_4()
       while (thread_flag_4 == 0):
-        if not(get_standard_digital_out(0) ==   False  ):
+        if not(get_standard_digital_out(1) ==   False  ):
           kill thread_handler_4
           thread_flag_4 = 2
         else:

@@ -7,7 +7,6 @@ import time
 import struct
 import math
 import subprocess
-import pandas as pd
 
 #constants
 PI = math.pi
@@ -45,10 +44,10 @@ while (l):
     l = f.read(1024)
 
 #moving
-
-
 Q0 = [0,PI/-2,0,PI/-2,0,0]
+
 Q3 = [1.2, -0.16, 0.54, -1.94, -1.47, 0.16]
+
 
 moveQ0 = "movej({0}, a=2.0, v=0.8)\n".format(Q0)
 moveQ3 = " movej({0}, a=2.0, v=0.8)\n".format(Q3)
@@ -94,6 +93,8 @@ s.send(bytes(fullCom,'utf-8'))
 s.send(bytes(moveQ1,'utf-8'))
 time.sleep(1)
 
+s.send(bytes("rq_open_and_wait ()\n",'utf-8'))
+
 #NOTE: this end is needed as the Gripper file is declaring a whole func called Gripper and the functions is only accessable inside that functions
 s.send(bytes("end\n",'utf-8'))
 time.sleep(0.1)
@@ -106,26 +107,10 @@ subprocess.check_output(["python", "record.py", "--host", str(HOST), "--samples"
 a = pd.read_csv("./robot_data.csv")
 joint3_force = a.loc[0][3]
 
-threshold = 0.2
+threshold = 0.01
 while joint3_force < threshold:
     subprocess.check_output(["python", "record.py", "--host", str(HOST), "--samples", "1", "--frequency", "125", "--config", "testforce.xml"])
     a = pd.read_csv("./robot_data.csv")
     joint3_force = a.loc[0][3]
-
-while True:
-    subprocess.check_output(["python", "record.py", "--host", str(HOST), "--samples", "1", "--frequency", "125", "--config", "testforce.xml"])
-    a = pd.read_csv("./robot_data.csv")
-    joint3_force = a.loc[0][3]
-# print("Yesss")
-    if joint3_force > threshold:
-        Q5 = [2.35, -1.12, 1.32, -2.7, -1.19, -0.24]
-        Q6 = [2.35, -1.12, 1.32, -3.0, -1.19, -0.24]
-        moveTo(Q5, 2.0, 0.8)
-        time.sleep(1)
-        moveTo(Q6, 2.0, 0.8)
-        time.sleep(1)
-    if joint3_force < -0.5:
-        break
-
-moveTo(Q4, 2.0, 0.8)
+print("Yesss")
 s.close()
