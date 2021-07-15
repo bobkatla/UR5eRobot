@@ -30,21 +30,49 @@ NUMBER_OBJECT = 2
 DISCRETE_SIZE = [NUMBER_OBJECT, NUMBER_ACTION ] #NOTE: objects are the rows while actions are the col
 # Here will be the functiosn wrapper
 
-# Move to a point
-def move_to():
+def load_gripper():
+    # This function just to load the gripper script
+    #set up the functions for gripper
+    f = open ("../commonSources/Gripper.script", "rb")   #Robotiq Gripper
+    l = f.read(1024)
+    while (l):
+        s.send(l)
+        l = f.read(1024)
+
+def custom_command(the_command_file_pos:str) -> str:
+    # This is just a function to create the custom command to send to the robot
+    # The input file (input is the pos of the file) would be .txt
+    f = open(the_command_file_pos, "r")
+    l = f.read()
+    return l
+
+custom_command("./customCommand.txt")
+
+def move_to(pos):
+    # Move to a point
     NotImplemented
 
 def pick_up():
+    # The pos to pick up
     NotImplemented
 
-def put_in_basket():
+def put_in_basket(basket):
+    # The pos to put in basket
     NotImplemented
 
 def searching_to_grasp():
+    # A main func to search for the grasp object
     NotImplemented
 
-def identify_object():
+def identify_object() -> []:
+    # Measure to know whether what type of object is it based on the force
     NotImplemented
+
+def measure_force(joint_number:int) -> int:
+    # Measure the force on the corresponding joint
+    NotImplemented
+
+
 
 # Set up the tabular storing for Q value to update
 start_q_table = None

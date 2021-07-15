@@ -1,0 +1,17 @@
+mv_up = [0, 0, 0, 0, 0, 0]
+mv_down = [0, 0, 0, 0, 0, 0]
+check = false
+i = 0
+
+rq_activate_and_wait()
+movej(mv_up, a=2.0, v=0.8)
+
+while(not check):
+    if(i%2 == 0):
+        mv_down[0] = mv_down[0] + (i/100)
+    else:
+        mv_down[0] = mv_down[0] - (i/100)
+    movej(mv_down, a=2.0, v=0.8)
+    rq_open_and_wait ()
+    rq_close_and_wait ()
+    check = rq_is_object_detected()
